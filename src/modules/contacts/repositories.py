@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -20,20 +22,20 @@ class ContactRepository:
         return new_contact
     
     @staticmethod
-    async def get_one_or_none(session: AsyncSession, id) -> Contact | None:
+    async def get_one_or_none(session: AsyncSession, id: UUID) -> Contact | None:
         query = select(Contact).filter_by(id=id)
         result = await session.execute(query)
         return result.scalar_one_or_none()
     
     @staticmethod
-    async def delete_contact(session: AsyncSession, id) -> None:
+    async def delete_contact(session: AsyncSession, id: UUID) -> int:
         query = delete(Contact).where(Contact.id == id)
         result = await session.execute(query)
         await session.commit()
         return result.rowcount
 
     @staticmethod
-    async def update_contact(session: AsyncSession, id, contact_data) -> Contact:
+    async def update_contact(session: AsyncSession, id: UUID, contact_data) -> Contact:
         query = update(Contact).where(Contact.id == id).values(**contact_data)
         await session.execute(query)
         await session.commit()

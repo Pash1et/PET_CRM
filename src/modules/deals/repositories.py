@@ -1,5 +1,7 @@
+from uuid import UUID
+
+from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 
 from modules.deals.models import Deal
 
@@ -11,7 +13,6 @@ class DealRepository:
         result = await session.execute(query)
         return result.scalars().all()
 
-
     @staticmethod
     async def create_deal(session: AsyncSession, deal_data: dict) -> Deal:
         new_deal = Deal(**deal_data)
@@ -19,3 +20,25 @@ class DealRepository:
         await session.commit()
         await session.refresh(new_deal)
         return new_deal
+    
+    @staticmethod
+    async def get_one_or_none(session: AsyncSession, id: UUID) -> Deal | None:
+        query = select(Deal).where(Deal.id == id)
+        result = await session.execute(query)
+        return result.scalar_one_or_none()
+    
+    @staticmethod
+    async def delete_deal(session: AsyncSession, id: UUID) -> int:
+        query = delete(Deal).where(Deal.id == id)
+        result = await session.execute(query)
+        await session.commit()
+        return result.rowcount
+    
+    @staticmethod
+    async def update_deal(session: AsyncSession, id: UUID, deal_data: dict) -> Deal:
+        query = update(Deal).where(Deal.id == id).values(**deal_data)
+        await session.execute(query)
+        await session.commit()
+        
+        updated_deal = await session.get(Deal, id)
+        return updated_deal
