@@ -37,8 +37,6 @@ class ContactRepository:
     @staticmethod
     async def update_contact(session: AsyncSession, id: UUID, contact_data) -> Contact:
         query = update(Contact).where(Contact.id == id).values(**contact_data)
-        await session.execute(query)
+        result = await session.execute(query)
         await session.commit()
-        
-        updated_contact = await session.get(Contact, id)
-        return updated_contact
+        return result.scalar_one()

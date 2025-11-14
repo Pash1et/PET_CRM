@@ -27,7 +27,8 @@ class UpdateContact(BaseContact):
     pass
 
 
-class Contact(BaseContact):
+class ReadContact(BaseContact):
     id: uuid.UUID
     updated_at: datetime
     created_at: datetime
+    responsible_user_id: uuid.UUID | None

@@ -15,6 +15,7 @@ from core.db import Base
 from core.config import settings
 from modules.contacts.models import Contact  # noqa
 from modules.deals.models import Deal  # noqa
+from modules.employees.models import Employee  # noqa
 
 
 # this is the Alembic Config object, which provides

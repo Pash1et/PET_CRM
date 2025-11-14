@@ -28,17 +28,15 @@ class DealRepository:
         return result.scalar_one_or_none()
     
     @staticmethod
-    async def delete_deal(session: AsyncSession, id: UUID) -> int:
-        query = delete(Deal).where(Deal.id == id)
+    async def delete_deal(session: AsyncSession, id: UUID) -> Deal:
+        query = delete(Deal).where(Deal.id == id).returning(Deal)
         result = await session.execute(query)
         await session.commit()
-        return result.rowcount
+        return result.scalar()
     
     @staticmethod
     async def update_deal(session: AsyncSession, id: UUID, deal_data: dict) -> Deal:
-        query = update(Deal).where(Deal.id == id).values(**deal_data)
-        await session.execute(query)
+        query = update(Deal).where(Deal.id == id).values(**deal_data).returning(Deal)
+        result = await session.execute(query)
         await session.commit()
-        
-        updated_deal = await session.get(Deal, id)
-        return updated_deal
+        return result.scalar_one()

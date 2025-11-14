@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime
 from decimal import Decimal
 from uuid import UUID
@@ -13,18 +14,22 @@ class BaseDeal(BaseModel):
     contact_id: UUID | None
 
 
-class DealCreate(BaseDeal):
+class CreateDeal(BaseDeal):
     pass
 
 
-class DealRead(BaseDeal):
+class ReadDeal(BaseDeal):
     id: UUID
     stage: DealStage
     created_at: datetime
     updated_at: datetime
+    responsible_user_id: uuid.UUID | None
+
+    class Config:
+        from_attributes = True
 
 
-class DealUpdate(BaseDeal):
+class UpdateDeal(BaseDeal):
     title: str | None
     contact_id: UUID | None = None
     stage: DealStage | None = None

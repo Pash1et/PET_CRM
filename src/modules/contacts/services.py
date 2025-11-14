@@ -2,6 +2,7 @@ import sqlalchemy
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from modules.contacts.models import Contact
 from modules.contacts.repositories import ContactRepository
 
 
@@ -45,7 +46,7 @@ class ContactService:
 
     
     @staticmethod
-    async def update_contact(session: AsyncSession, id, contact_data):
+    async def update_contact(session: AsyncSession, id, contact_data) -> Contact:
         contact = await ContactService.get_one_or_none(session, id)
         if not contact:
             raise HTTPException(
@@ -53,11 +54,6 @@ class ContactService:
                 detail="Contact not found"
             )
         
-        # filtered_data = dict(
-        #     filter(
-        #         lambda x: x[1] is not None, contact_data.model_dump().items()
-        #         )
-        # )
         filtered_data = contact_data.model_dump(exclude_unset=True)
         updated_contact = await ContactRepository.update_contact(session, id, filtered_data)
         return updated_contact
