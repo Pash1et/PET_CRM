@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import insert
+from sqlalchemy import delete, insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
@@ -26,3 +26,10 @@ class EmployeeRepository:
         result = await session.execute(query)
         await session.commit()
         return result.scalar_one()
+    
+    @staticmethod
+    async def delete_employee(session: AsyncSession, employee_id: UUID) -> Employee:
+        query = delete(Employee).where(Employee.id == employee_id).returning(Employee)
+        result = await session.execute(query)
+        await session.commit()
+        return result.scalar()

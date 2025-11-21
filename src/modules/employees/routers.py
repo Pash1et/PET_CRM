@@ -1,4 +1,5 @@
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -7,7 +8,7 @@ from core.db import get_async_session
 from modules.employees.schemas import CreateEmployee, ReadEmployee
 from modules.employees.services import EmployeeService
 
-router = APIRouter(prefix="/employee", tags=["employee"])
+router = APIRouter(prefix="/employee", tags=["employees"])
 
 
 @router.get("/", status_code=status.HTTP_200_OK, response_model=list[ReadEmployee])
@@ -29,6 +30,9 @@ async def create_employee(
 async def update_employee():
     pass
 
-@router.delete("/")
-async def delete_employee():
-    pass
+@router.delete("/", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_employee(
+    session: Annotated[AsyncSession, Depends(get_async_session)],
+    id: UUID,
+):
+    await EmployeeService.delete_employee(session, id)

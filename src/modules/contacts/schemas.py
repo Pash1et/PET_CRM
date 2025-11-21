@@ -9,6 +9,7 @@ class BaseContact(BaseModel):
     last_name: str | None = None
     phone: str | None = None
     telegram_username: str | None = None
+    responsible_user_id: uuid.UUID | None = None
 
     @field_validator("telegram_username")
     def check_telegram_username(cls, v):
@@ -31,4 +32,3 @@ class ReadContact(BaseContact):
     id: uuid.UUID
     updated_at: datetime
     created_at: datetime
-    responsible_user_id: uuid.UUID | None

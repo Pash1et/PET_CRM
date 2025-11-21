@@ -12,5 +12,6 @@ class Employee(Base):
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), default=uuid.uuid4, primary_key=True)
     first_name: Mapped[str]
     last_name: Mapped[str]
-    email: Mapped[str]
+    email: Mapped[str] = mapped_column(unique=True)
     hashed_password: Mapped[str]
+    # is_active: Mapped[bool] = mapped_column(default=False, server_default="false")

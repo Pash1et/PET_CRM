@@ -22,8 +22,8 @@ class ContactRepository:
         return new_contact
     
     @staticmethod
-    async def get_one_or_none(session: AsyncSession, id: UUID) -> Contact | None:
-        query = select(Contact).filter_by(id=id)
+    async def get_one_or_none(session: AsyncSession, **filter_by) -> Contact | None:
+        query = select(Contact).filter_by(**filter_by)
         result = await session.execute(query)
         return result.scalar_one_or_none()
     
@@ -36,7 +36,7 @@ class ContactRepository:
 
     @staticmethod
     async def update_contact(session: AsyncSession, id: UUID, contact_data) -> Contact:
-        query = update(Contact).where(Contact.id == id).values(**contact_data)
+        query = update(Contact).where(Contact.id == id).values(**contact_data).returning(Contact)
         result = await session.execute(query)
         await session.commit()
         return result.scalar_one()
