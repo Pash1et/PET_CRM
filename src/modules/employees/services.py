@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from modules.employees.repositories import EmployeeRepository
 from modules.employees.utils import Hasher
 from core.redis import redis_client
+from core.config import settings
 
 
 class EmployeeService:
@@ -31,10 +32,10 @@ class EmployeeService:
         })
         await redis_client.rpush("employee_queue", str(new_employee.id))
         async with AsyncClient() as client:
-            client.post(
+            await client.post(
                 "https://api.wazzup24.com/v3/users",
                 headers = {
-                    "Authorization": "Bearer e1aecb0191954104bbd640c712e9765c"
+                    "Authorization": f"Bearer {settings.WAZZUP_API_KEY}"
                 },
                 json = [
                     {
@@ -66,11 +67,35 @@ class EmployeeService:
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Error. Employee not deleted"
             )
+
+        await redis_client.lrem("employee_queue", 0, str(employee.id))
         
         async with AsyncClient() as client:
             await client.delete(
                 f"https://api.wazzup24.com/v3/users/{str(employee.id)}",
                 headers = {
-                    "Authorization": "Bearer e1aecb0191954104bbd640c712e9765c"
+                    "Authorization": f"Bearer {settings.WAZZUP_API_KEY}"
                 },
             )
+
+    @staticmethod
+    async def pull_employee(session: AsyncSession):
+        async with AsyncClient() as client:
+            res = await client.get(
+                "https://api.wazzup24.com/v3/users/",
+                headers = {
+                    "Authorization": f"Bearer {settings.WAZZUP_API_KEY}"
+                }
+            )
+
+            for employee in res.json():
+                if not await EmployeeRepository.get_one_or_none(session, id=employee.get("id")):
+                    await EmployeeRepository.create_employee(session, {
+                        "id": employee.get("id"),
+                        "first_name": employee.get("name").split(" ")[0],
+                        "last_name": employee.get("name").split(" ")[1],
+                        "email": f"{employee.get("id")}@CRM.com",
+                        "hashed_password": "PASS123"
+                        }
+                    )
+                    await redis_client.rpush("employee_queue", employee.get("id"))

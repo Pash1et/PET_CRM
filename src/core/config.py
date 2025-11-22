@@ -22,5 +22,10 @@ class Settings(BaseSettings):
     def REDIS_URL(self):
         return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}"
     
+    WAZZUP_API_KEY: str
+
+    SECRET_KEY: str = Field(default="b2444904380b4eca7cb2cc5e12721d15b4ef32a9caa25df0e1b5839b1b5a16bf")
+    ALGORITHM: str = Field(default="HS256")
+    
 
 settings = Settings()

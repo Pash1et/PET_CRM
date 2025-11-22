@@ -36,3 +36,11 @@ async def delete_employee(
     id: UUID,
 ):
     await EmployeeService.delete_employee(session, id)
+
+
+### ТОЛЬКО ДЛЯ ТЕСТОВ ###
+@router.get("/pull_wazzup_employees", status_code=status.HTTP_200_OK)
+async def pull_wazzup_employees(
+    session: Annotated[AsyncSession, Depends(get_async_session)],
+):
+    await EmployeeService.pull_employee(session)

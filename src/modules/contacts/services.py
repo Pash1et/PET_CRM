@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from modules.contacts.models import Contact
 from modules.contacts.repositories import ContactRepository
 from core.redis import redis_client
+from core.config import settings
 
 
 class ContactService:
@@ -41,7 +42,7 @@ class ContactService:
             await client.post(
                 "https://api.wazzup24.com/v3/contacts",
                 headers = {
-                    "Authorization": "Bearer e1aecb0191954104bbd640c712e9765c"
+                    "Authorization": f"Bearer {settings.WAZZUP_API_KEY}"
                 },
                 json = [
                     {
@@ -76,7 +77,7 @@ class ContactService:
             await client.delete(
                 f"https://api.wazzup24.com/v3/contacts/{str(contact.id)}",
                 headers = {
-                    "Authorization": "Bearer e1aecb0191954104bbd640c712e9765c"
+                    "Authorization": f"Bearer {settings.WAZZUP_API_KEY}"
                 },
             )
 
