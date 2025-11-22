@@ -1,4 +1,3 @@
-from httpx import AsyncClient
 import sqlalchemy
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -6,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from modules.contacts.models import Contact
 from modules.contacts.repositories import ContactRepository
 from core.redis import redis_client
-from core.config import settings
+from modules.wazzup.contacts import WazzupContacts
 
 
 class ContactService:
@@ -27,32 +26,18 @@ class ContactService:
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Contact with this number of tg_username already exists"
             )
-        contact_data = [
-            {
-                "chatType": "whatsapp",
-                "chatId": new_contact.phone
-            },
-            {
-                "chatType": "telegram",
-                "phone": new_contact.phone,
-                "username": new_contact.telegram_username.strip("@")
-            }
-        ]
-        async with AsyncClient() as client:
-            await client.post(
-                "https://api.wazzup24.com/v3/contacts",
-                headers = {
-                    "Authorization": f"Bearer {settings.WAZZUP_API_KEY}"
-                },
-                json = [
-                    {
-                        "id": str(new_contact.id),
-                        "responsibleUserId": str(new_contact.responsible_user_id),
-                        "name": f"{new_contact.first_name} {new_contact.last_name}",
-                        "contactData": contact_data
-                    }
-                ]
-            )
+
+        wazzup = WazzupContacts()
+        await wazzup.create_contact([{
+            "id": str(new_contact.id),
+            "responsibleUserId": str(new_contact.responsible_user_id),
+            "name": f"{new_contact.first_name} {new_contact.last_name}",
+            "contactData": [
+                {"chatType": "whatsapp", "chatId": new_contact.phone},
+                {"chatType": "telegram", "username": new_contact.telegram_username.strip("@")},
+            ]
+        }])
+
         return new_contact
     
     @staticmethod
@@ -73,13 +58,8 @@ class ContactService:
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Error. Contact not deleted"
             )
-        async with AsyncClient() as client:
-            await client.delete(
-                f"https://api.wazzup24.com/v3/contacts/{str(contact.id)}",
-                headers = {
-                    "Authorization": f"Bearer {settings.WAZZUP_API_KEY}"
-                },
-            )
+        wazzup = WazzupContacts()
+        await wazzup.delete_contact(contact.id)
 
     
     @staticmethod
@@ -93,4 +73,16 @@ class ContactService:
         
         filtered_data = contact_data.model_dump(exclude_unset=True)
         updated_contact = await ContactRepository.update_contact(session, id, filtered_data)
+        wazzup = WazzupContacts()
+
+        await wazzup.update_contact([{
+            "id": str(updated_contact.id),
+            "responsibleUserId": str(updated_contact.responsible_user_id),
+            "name": f"{updated_contact.first_name} {updated_contact.last_name}",
+            "contactData": [
+                {"chatType": "whatsapp", "chatId": updated_contact.phone},
+                {"chatType": "telegram", "username": updated_contact.telegram_username.strip("@")},
+            ]
+        }])
+
         return updated_contact

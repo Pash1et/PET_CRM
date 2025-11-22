@@ -14,7 +14,9 @@ class CreateEmployee(BaseEmployee):
 
 
 class UpdateEmployee(BaseEmployee):
-    pass
+    first_name: str | None = None
+    last_name: str | None = None
+    email: EmailStr | None = None
 
 
 class ReadEmployee(BaseEmployee):

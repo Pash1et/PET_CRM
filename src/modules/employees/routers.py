@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.db import get_async_session
-from modules.employees.schemas import CreateEmployee, ReadEmployee
+from modules.employees.schemas import CreateEmployee, ReadEmployee, UpdateEmployee
 from modules.employees.services import EmployeeService
 
 router = APIRouter(prefix="/employee", tags=["employees"])
@@ -26,9 +26,14 @@ async def create_employee(
     new_employee = await EmployeeService.create_employee(session, employee_data)
     return new_employee
 
-@router.put("/")
-async def update_employee():
-    pass
+@router.put("/", status_code=status.HTTP_200_OK, response_model=ReadEmployee)
+async def update_employee(
+    session: Annotated[AsyncSession, Depends(get_async_session)],
+    id: UUID,
+    employee_data: UpdateEmployee,
+):
+    updated_employee = await EmployeeService.update_employee(session, id, employee_data)
+    return updated_employee
 
 @router.delete("/", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_employee(
