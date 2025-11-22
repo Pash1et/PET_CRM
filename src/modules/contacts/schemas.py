@@ -9,14 +9,15 @@ class BaseContact(BaseModel):
     last_name: str | None = None
     phone: str | None = None
     telegram_username: str | None = None
+    telegram_id: str | None = None
     responsible_user_id: uuid.UUID | None = None
 
-    @field_validator("telegram_username")
-    def check_telegram_username(cls, v):
-        if v:
-            if not v.startswith("@"):
-                raise ValueError("Telegram username must start with @")
-            return v
+    # @field_validator("telegram_username")
+    # def check_telegram_username(cls, v):
+    #     if v:
+    #         if not v.startswith("@"):
+    #             raise ValueError("Telegram username must start with @")
+    #         return v
         
 
 class CreateContact(BaseContact):

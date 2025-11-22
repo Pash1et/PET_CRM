@@ -18,6 +18,7 @@ class Contact(Base):
     last_name: Mapped[str]
     phone: Mapped[str | None] = mapped_column(unique=True)
     telegram_username: Mapped[str | None] = mapped_column(unique=True)
+    telegram_id: Mapped[str | None] = mapped_column(unique=True)
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(server_default=func.now(), onupdate=func.now())
     responsible_user_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("employees.id", ondelete="SET NULL"))

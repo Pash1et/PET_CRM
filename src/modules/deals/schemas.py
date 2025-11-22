@@ -15,7 +15,7 @@ class BaseDeal(BaseModel):
 
 
 class CreateDeal(BaseDeal):
-    pass
+    responsible_user_id: uuid.UUID | None = None
 
 
 class ReadDeal(BaseDeal):
@@ -30,6 +30,7 @@ class ReadDeal(BaseDeal):
 
 
 class UpdateDeal(BaseDeal):
-    title: str | None
+    title: str | None = None
     contact_id: UUID | None = None
     stage: DealStage | None = None
+    responsible_user_id: uuid.UUID | None = None

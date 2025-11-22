@@ -14,4 +14,4 @@ class Employee(Base):
     last_name: Mapped[str]
     email: Mapped[str] = mapped_column(unique=True)
     hashed_password: Mapped[str]
-    # is_active: Mapped[bool] = mapped_column(default=False, server_default="false")
+    is_active: Mapped[bool] = mapped_column(default=False, server_default="false")
