@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <a href="/ui/" class="crm-back-btn">
+        <span class="arrow">←</span>
+        <span>На главную</span>
+    </a>
+    <h1 class="page-title">Контакты</h1>
+</div>
+
+
+<div id="contacts-table"
+     hx-get="/ui/contacts/partial"
+     hx-trigger="load">
+    Загрузка...
+</div>
+
+<style>
+    .page-header {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        margin-bottom: 25px;
+    }
+
+    .crm-back-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 14px;
+        background: #ffffff;
+        color: #2c3e50;
+        text-decoration: none;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        transition: background 0.15s ease, 
+                    box-shadow 0.15s ease,
+                    transform 0.15s ease;
+    }
+
+    .crm-back-btn:hover {
+        background: #f7f9fc;
+        box-shadow: 0 3px 8px rgba(0,0,0,0.08);
+        transform: translateY(-2px);
+    }
+
+    .crm-back-btn .arrow {
+        font-size: 16px;
+        font-weight: 600;
+        opacity: 0.8;
+    }
+
+    .page-title {
+        font-size: 26px;
+        color: #2c3e50;
+        margin: 0;
+        font-weight: 600;
+    }
+</style>
+
+{% endblock %}

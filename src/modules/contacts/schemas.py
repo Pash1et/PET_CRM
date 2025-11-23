@@ -22,7 +22,7 @@ class BaseContact(BaseModel):
 
 class CreateContact(BaseContact):
     first_name: str
-    last_name: str
+    last_name: str | None = None
 
 
 class UpdateContact(BaseContact):

@@ -41,7 +41,7 @@ async def webhook(req: Request, session: Annotated[AsyncSession, Depends(get_asy
             full_name = payload["createContact"]["name"].split()
             contact_data = CreateContact(
                 first_name=full_name[0],
-                last_name=full_name[1] if len(full_name) > 1 else None,
+                last_name=full_name[1] if len(full_name) > 1 else "",
                 telegram_id=payload["createContact"]["contactData"][0].get("chatId"),
                 telegram_username=payload["createContact"]["contactData"][0].get("username"),
                 responsible_user_id=payload["createContact"]["responsibleUserId"],

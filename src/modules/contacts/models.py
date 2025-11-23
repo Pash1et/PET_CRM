@@ -15,7 +15,7 @@ class Contact(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), default=uuid.uuid4, primary_key=True)
     first_name: Mapped[str]
-    last_name: Mapped[str]
+    last_name: Mapped[str | None]
     phone: Mapped[str | None] = mapped_column(unique=True)
     telegram_username: Mapped[str | None] = mapped_column(unique=True)
     telegram_id: Mapped[str | None] = mapped_column(unique=True)

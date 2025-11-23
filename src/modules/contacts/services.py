@@ -21,13 +21,14 @@ class ContactService:
         contact_data = contact_data.model_dump()
         if contact_data.get("responsible_user_id") is None:
             contact_data["responsible_user_id"] = await redis_client.rpoplpush("employee_queue", "employee_queue")
-        try:
-            new_contact = await ContactRepository.create_contact(session, contact_data) 
-        except sqlalchemy.exc.IntegrityError:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Contact with this number of tg_username already exists"
-            )
+        new_contact = await ContactRepository.create_contact(session, contact_data) 
+        # try:
+        #     new_contact = await ContactRepository.create_contact(session, contact_data) 
+        # except sqlalchemy.exc.IntegrityError:
+        #     raise HTTPException(
+        #         status_code=status.HTTP_400_BAD_REQUEST,
+        #         detail="Contact with this number of tg_username already exists"
+        #     )
         
         if sync_to_wazzup:
             contact_data_to_wazzup = []
@@ -52,7 +53,7 @@ class ContactService:
         return await ContactRepository.get_one_or_none(session, **filter_by)
     
     @staticmethod
-    async def delete_contact(session: AsyncSession, id):
+    async def delete_contact(session: AsyncSession, id: UUID):
         contact = await ContactService.get_one_or_none(session, id=id)
 
         if not contact:
