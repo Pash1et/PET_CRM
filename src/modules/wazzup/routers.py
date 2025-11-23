@@ -14,6 +14,7 @@ router = APIRouter(prefix="/wazzup", tags=["wazzup webhooks"])
 @router.post("/webhook", status_code=status.HTTP_200_OK)
 async def webhook(req: Request, session: Annotated[AsyncSession, Depends(get_async_session)]):
     payload = await req.json()
+    print(payload)
     if "createDeal" in payload:
         contact = await ContactService.get_one_or_none(session, id=payload["createDeal"]["contacts"][0])
         if contact:
@@ -34,14 +35,15 @@ async def webhook(req: Request, session: Annotated[AsyncSession, Depends(get_asy
     if "createContact" in payload:
         contact = await ContactService.get_one_or_none(
             session,
-            telegram_username=payload["createContact"]["contactData"][0]["username"],
+            telegram_username=payload["createContact"]["contactData"][0].get("username"),
         )
         if not contact:
+            full_name = payload["createContact"]["name"].split()
             contact_data = CreateContact(
-                first_name=payload["createContact"]["name"].split(" ")[0],
-                last_name=payload["createContact"]["name"].split(" ")[1],
-                telegram_id=payload["createContact"]["contactData"][0]["chatId"],
-                telegram_username=payload["createContact"]["contactData"][0]["username"],
+                first_name=full_name[0],
+                last_name=full_name[1] if len(full_name) > 1 else None,
+                telegram_id=payload["createContact"]["contactData"][0].get("chatId"),
+                telegram_username=payload["createContact"]["contactData"][0].get("username"),
                 responsible_user_id=payload["createContact"]["responsibleUserId"],
             )
             new_contact = await ContactService.create_contact(session, contact_data, sync_to_wazzup=False)
@@ -65,6 +67,5 @@ async def webhook(req: Request, session: Annotated[AsyncSession, Depends(get_asy
                 telegram_id=chat_id,
             )
             await ContactService.update_contact(session, contact.id, updated_data)
-        print("Сообщение пришло")
-    print(payload)
+
     return {"status": "ok"}

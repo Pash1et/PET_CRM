@@ -1,4 +1,3 @@
-from uuid import UUID
 from httpx import AsyncClient
 
 from core.config import settings
@@ -11,7 +10,8 @@ class WazzupClient:
         self.client = AsyncClient(
             base_url=self.BASE_URL,
             headers={
-                "Authorization": f"Bearer {settings.WAZZUP_API_KEY}"
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {settings.WAZZUP_API_KEY}",
             }
         )
 
