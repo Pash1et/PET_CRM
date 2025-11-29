@@ -26,6 +26,7 @@ class Settings(BaseSettings):
 
     SECRET_KEY: str = Field(default="b2444904380b4eca7cb2cc5e12721d15b4ef32a9caa25df0e1b5839b1b5a16bf")
     ALGORITHM: str = Field(default="HS256")
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default="30")
     
 
 settings = Settings()

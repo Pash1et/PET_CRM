@@ -21,3 +21,13 @@ class UpdateEmployee(BaseEmployee):
 
 class ReadEmployee(BaseEmployee):
     id: uuid.UUID
+
+
+class LoginEmployee(BaseModel):
+    email: EmailStr
+    password: str
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str

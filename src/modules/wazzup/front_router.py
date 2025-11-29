@@ -1,7 +1,10 @@
-from fastapi import APIRouter, Request
+from typing import Annotated
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
+from modules.employees.dependencies import get_current_employee
+from modules.employees.schemas import ReadEmployee
 from modules.wazzup.iframe import WazzupIframe
 from modules.wazzup.unanswered_count import UnansweredCount
 
@@ -12,12 +15,15 @@ router = APIRouter(prefix="/ui/wazzup", tags=["UI Wazzup"])
 
 
 @router.get("/", response_class=HTMLResponse)
-async def wazzup_page(request: Request):
+async def wazzup_global_widget(
+    request: Request,
+    employee: Annotated[ReadEmployee, Depends(get_current_employee)]
+):
     wazzup = WazzupIframe()
     res = await wazzup.get_iframe_url({
         "user": {
-            "id": "94390b09-b3e6-44bb-9b91-d9f495a74fa4",
-            "name": "Dmitry Gorelov"
+            "id": str(employee.id),
+            "name": f"{employee.first_name} {employee.last_name}"
         },
         "scope": "global",
     })
@@ -28,9 +34,12 @@ async def wazzup_page(request: Request):
     )
 
 @router.get("/unread-count", response_class=HTMLResponse)
-async def unread_count_page(request: Request):
+async def unread_count_page(
+    request: Request,
+    employee: Annotated[ReadEmployee, Depends(get_current_employee)],
+):
     wazzup = UnansweredCount()
-    res = await wazzup.get_unanswered_count("94390b09-b3e6-44bb-9b91-d9f495a74fa4")
+    res = await wazzup.get_unanswered_count(employee.id)
     return f'<span id="wazzup-counter-inner">{res.json()["counterV2"]}</span>'
 
 

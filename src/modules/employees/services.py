@@ -1,6 +1,8 @@
+from datetime import datetime, timedelta
 from uuid import UUID
 from httpx import AsyncClient
 from fastapi import HTTPException, status
+import jwt
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from modules.employees.repositories import EmployeeRepository
@@ -90,24 +92,26 @@ class EmployeeService:
 
         return updated_employee
 
-    @staticmethod
-    async def pull_employee(session: AsyncSession):
-        async with AsyncClient() as client:
-            res = await client.get(
-                "https://api.wazzup24.com/v3/users/",
-                headers = {
-                    "Authorization": f"Bearer {settings.WAZZUP_API_KEY}"
-                }
-            )
 
-            for employee in res.json():
-                if not await EmployeeRepository.get_one_or_none(session, id=employee.get("id")):
-                    await EmployeeRepository.create_employee(session, {
-                        "id": employee.get("id"),
-                        "first_name": employee.get("name").split(" ")[0],
-                        "last_name": employee.get("name").split(" ")[1],
-                        "email": f"{employee.get("id")}@CRM.com",
-                        "hashed_password": "PASS123"
-                        }
-                    )
-                    await redis_client.rpush("employee_queue", employee.get("id"))
+class AuthService:
+    @staticmethod
+    async def authenticate_employee(session: AsyncSession, email: str, password: str):
+        employee = await EmployeeRepository.get_one_or_none(session, email=email)
+
+        if employee and Hasher.verify_password(password, employee.hashed_password):
+            return employee
+        return None
+    
+    @staticmethod
+    async def create_access_token(employee_id: UUID):
+        to_encode = {
+            "sub": str(employee_id),
+            "exp": datetime.now() + timedelta(
+                minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
+            )
+        }
+
+        encoded_jwt = jwt.encode(
+            to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM,
+        )
+        return encoded_jwt
