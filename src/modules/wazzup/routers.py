@@ -63,9 +63,6 @@ async def webhook(req: Request, session: Annotated[AsyncSession, Depends(get_asy
         contact_chat_id = payload["messages"][0]["contact"].get("chatId")
         if chat_type == "telegram" and contact_chat_id is None:
             contact = await ContactService.get_one_or_none(session, telegram_username=payload["messages"][0]["contact"]["username"])
-            updated_data = UpdateContact(
-                telegram_id=chat_id,
-            )
-            await ContactService.update_contact(session, contact.id, updated_data)
+            await ContactService.update_contact(session, contact.id, UpdateContact(telegram_id=chat_id))
 
     return {"status": "ok"}

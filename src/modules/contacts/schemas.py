@@ -6,23 +6,25 @@ from pydantic import BaseModel, field_validator
 
 class BaseContact(BaseModel):
     first_name: str | None = None
-    last_name: str | None = None
+    last_name: str | None = ""
     phone: str | None = None
     telegram_username: str | None = None
     telegram_id: str | None = None
     responsible_user_id: uuid.UUID | None = None
-
-    # @field_validator("telegram_username")
-    # def check_telegram_username(cls, v):
-    #     if v:
-    #         if not v.startswith("@"):
-    #             raise ValueError("Telegram username must start with @")
-    #         return v
         
 
 class CreateContact(BaseContact):
     first_name: str
     last_name: str | None = None
+
+    @field_validator("*", mode="before")
+    def empty_fields_to_none(cls, v, info):
+        if info.field_name == "last_name":
+            return v
+        if v == "":
+            return None
+        else:
+            return v
 
 
 class UpdateContact(BaseContact):

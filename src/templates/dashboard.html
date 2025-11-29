@@ -25,6 +25,19 @@
             <div class="tile-title">Сотрудники</div>
             <div class="tile-desc">Раздел скоро будет</div>
         </a>
+
+        <a href="/ui/wazzup/" class="tile">
+            <div class="tile-title">Wazzup
+                <span class="badge"
+                    hx-get="/ui/wazzup/unread-count"
+                    hx-trigger="load, every 10s"
+                    hx-target="#wazzup-counter-inner"
+                    hx-swap="outerHTML">
+                    <span id="wazzup-counter-inner">0</span>
+                </span>
+            </div>
+            <div class="tile-desc">iFrame Wazzup</div>
+        </a>
     </div>
 
 </div>
@@ -88,6 +101,16 @@
     .tile.disabled:hover {
         transform: none;
         box-shadow: none;
+    }
+
+    .badge {
+        background: #e53935;
+        color: white;
+        padding: 2px 8px;
+        font-size: 12px;
+        border-radius: 10px;
+        margin-left: 8px;
+        font-weight: 600;
     }
 </style>
 

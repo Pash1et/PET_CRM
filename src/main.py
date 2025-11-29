@@ -9,11 +9,13 @@ from modules.wazzup.routers import router as wazzup_router
 
 from modules.contacts.front_router import router as contacts_front_router
 from modules.contacts.front_router import templates
+from modules.wazzup.front_router import router as wazzup_front_router
 
 
 app = FastAPI(title="CRM", version="0.0.1")
 app.mount("/static", StaticFiles(directory="src/static"), name="static")
 app.include_router(contacts_front_router)
+app.include_router(wazzup_front_router)
 
 @app.get("/ui", response_class=HTMLResponse)
 async def dashboard(request: Request):

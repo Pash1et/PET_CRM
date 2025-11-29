@@ -18,7 +18,7 @@ class ContactService:
     
     @staticmethod
     async def create_contact(session: AsyncSession, contact_data: CreateContact, sync_to_wazzup: bool = True):
-        contact_data = contact_data.model_dump()
+        contact_data = contact_data.model_dump(exclude_unset=True)
         if contact_data.get("responsible_user_id") is None:
             contact_data["responsible_user_id"] = await redis_client.rpoplpush("employee_queue", "employee_queue")
         new_contact = await ContactRepository.create_contact(session, contact_data) 
