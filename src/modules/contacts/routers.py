@@ -1,10 +1,11 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.db import get_async_session
+from modules.contacts.exceptions import ContactAlreadyExists, ContactDeleteError, ContactNotFound
 from modules.contacts.schemas import ReadContact, CreateContact, UpdateContact
 from modules.contacts.services import ContactService
 
@@ -32,7 +33,23 @@ async def delete_contact(
     session: Annotated[AsyncSession, Depends(get_async_session)], 
     id: UUID,
 ):
-    await ContactService.delete_contact(session, id)
+    try:
+        await ContactService.delete_contact(session, id)
+    except ContactNotFound:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Contact not found",
+        )
+    except ContactDeleteError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Contact not deleted",
+        )
+    except ContactAlreadyExists:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Contact already exists",
+        )
 
 @router.put("/{id}", status_code=status.HTTP_200_OK, response_model=ReadContact)
 async def update_contact(
@@ -40,5 +57,10 @@ async def update_contact(
     id: UUID,
     contact_data: UpdateContact
 ):
-    upd_contact = await ContactService.update_contact(session, id, contact_data)
-    return upd_contact
+    try:
+        return await ContactService.update_contact(session, id, contact_data)
+    except ContactNotFound:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Contact not found",
+        )

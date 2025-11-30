@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import delete, select, update
+from sqlalchemy import delete, select, update, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from modules.contacts.models import Contact
@@ -40,3 +40,27 @@ class ContactRepository:
         result = await session.execute(query)
         await session.commit()
         return result.scalar_one()
+    
+    @staticmethod
+    async def find_existing_contact(
+        session: AsyncSession,
+        phone: str | None = None,
+        telegram_username: str | None = None,
+        telegram_id: str | None = None
+    ) -> Contact | None:
+        query = select(Contact)
+
+        contact_data = []
+        if phone:
+            contact_data.append(Contact.phone == phone)
+        if telegram_username:
+            contact_data.append(Contact.telegram_username == telegram_username)
+        if telegram_id:
+            contact_data.append(Contact.telegram_id == telegram_id)
+
+        if not contact_data:
+            return None
+
+        query = query.where(or_(*contact_data))
+        result = await session.execute(query)
+        return result.scalar_one_or_none()
