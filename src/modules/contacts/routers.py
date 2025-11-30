@@ -16,8 +16,7 @@ router = APIRouter(prefix="/contacts", tags=["contacts"])
 async def get_contacts(
     session: Annotated[AsyncSession, Depends(get_async_session)],
 ):
-    contacts = await ContactService.get_contacts(session)
-    return contacts
+    return await ContactService.get_contacts(session)
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=ReadContact)
@@ -25,8 +24,7 @@ async def create_contact(
     session: Annotated[AsyncSession, Depends(get_async_session)],
     contact_data: CreateContact,
 ):
-    new_contact = await ContactService.create_contact(session, contact_data)
-    return new_contact
+    return await ContactService.create_contact(session, contact_data)
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_contact(
