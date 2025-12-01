@@ -5,25 +5,29 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from modules.deals.exceptions import DealDeleteError, DealNotFound
 from modules.deals.models import Deal, DealStage
 from modules.deals.repositories import DealRepository
-from modules.deals.schemas import CreateDeal, ReadDeal, UpdateDeal
+from modules.deals.schemas import CreateDeal, UpdateDeal
 from modules.wazzup.deals import WazzupDeals
 
 
 class DealService:
-    wazzup = WazzupDeals() # Подумать как лучше вынести в DI
 
-    @staticmethod
-    async def get_deals(session: AsyncSession) -> list[ReadDeal]:
-        deals = await DealRepository.get_all_deals(session)
-        return deals
+    def __init__(
+        self,
+        session: AsyncSession,
+        wazzup_deals: WazzupDeals,
+    ):
+        self.session = session
+        self.wazzup_deals = wazzup_deals
+
+    async def get_deals(self) -> list[Deal]:
+        return await DealRepository.get_all_deals(self.session)
     
-    @staticmethod
-    async def create_deal(session: AsyncSession, deal_data: CreateDeal, sync_to_wazzup: bool = True) -> Deal:
+    async def create_deal(self, deal_data: CreateDeal, sync_to_wazzup: bool = True) -> Deal:
         deal_data = deal_data.model_dump()
-        new_deal = await DealRepository.create_deal(session, deal_data)
+        new_deal = await DealRepository.create_deal(self.session, deal_data)
 
         if sync_to_wazzup:
-            await DealService.wazzup.create_deal([{
+            await self.wazzup_deals.create_deal([{
                 "id": str(new_deal.id),
                 "responsibleUserId": str(new_deal.responsible_user_id),
                 "name": f"{new_deal.title}",
@@ -33,33 +37,30 @@ class DealService:
 
         return new_deal
     
-    @staticmethod
-    async def get_one_or_none(session: AsyncSession, id: UUID) -> Deal | None:
-        return await DealRepository.get_one_or_none(session, id)
+    async def get_one_or_none(self, id: UUID) -> Deal | None:
+        return await DealRepository.get_one_or_none(self.session, id)
     
-    @staticmethod
-    async def delete_deal(session: AsyncSession, id: UUID) -> None:
-        deal = await DealService.get_one_or_none(session, id)
+    async def delete_deal(self, id: UUID) -> None:
+        deal = await self.get_one_or_none(id)
         if not deal:
             raise DealNotFound()
 
-        deleted = await DealRepository.delete_deal(session, id)
+        deleted = await DealRepository.delete_deal(self.session, id)
         if not deleted:
             raise DealDeleteError()
         
-        await DealService.wazzup.delete_deal(deal.id)
+        await self.wazzup_deals.delete_deal(deal.id)
 
-    @staticmethod
-    async def update_deal(session: AsyncSession, id: UUID, deal_data: UpdateDeal) -> Deal:
-        deal = await DealService.get_one_or_none(session, id)
+    async def update_deal(self, id: UUID, deal_data: UpdateDeal) -> Deal:
+        deal = await self.get_one_or_none(id)
         if not deal:
             raise DealNotFound()
 
         filtered_data = deal_data.model_dump(exclude_unset=True)
-        updated_deal = await DealRepository.update_deal(session, id, filtered_data)
+        updated_deal = await DealRepository.update_deal(self.session, id, filtered_data)
 
         closed = True if updated_deal.stage == DealStage.won or updated_deal.stage == DealStage.lost else False
-        await DealService.wazzup.update_deal([{
+        await self.wazzup_deals.update_deal([{
             "id": str(updated_deal.id),
             "responsibleUserId": str(updated_deal.responsible_user_id),
             "name": f"{updated_deal.title}",
