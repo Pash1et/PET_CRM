@@ -32,7 +32,7 @@ async def get_current_employee(
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        payload = jwt.decode(access_token, settings.SECRET_KEY, algorithms=settings.ALGORITHM)
+        payload = jwt.decode(access_token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         user_id = payload.get("sub")
         if user_id is None:
             raise credentials_exception
