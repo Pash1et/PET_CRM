@@ -18,6 +18,13 @@ async def get_contacts(
 ):
     return await contact_service.get_contacts()
 
+@router.get("/{id}", status_code=status.HTTP_200_OK, response_model=ReadContact)
+async def get_contact(
+    contact_service: Annotated[ContactService, Depends(get_contact_service)],
+    id: UUID,
+):
+    return await contact_service.get_one_or_none(id=id)
+
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=ReadContact)
 async def create_contact(
     contact_service: Annotated[ContactService, Depends(get_contact_service)],
