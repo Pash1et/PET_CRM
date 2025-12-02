@@ -6,8 +6,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.config import settings
 from core.db import get_async_session
-from modules.employees.dependencies import get_current_employee
-from modules.employees.schemas import CreateEmployee, LoginEmployee, ReadEmployee, Token, UpdateEmployee
+from modules.employees.dependencies import (get_current_employee,
+                                            get_employee_service)
+from modules.employees.exceptions import (EmployeeAlreadyExists,
+                                          EmployeeDeleteError,
+                                          EmployeeNotFound)
+from modules.employees.schemas import (CreateEmployee, LoginEmployee,
+                                       ReadEmployee, Token, UpdateEmployee)
 from modules.employees.services import AuthService, EmployeeService
 
 employee_router = APIRouter(prefix="/employee", tags=["employees"])
@@ -16,26 +21,36 @@ auth_router = APIRouter(prefix="/auth", tags=["auth"])
 
 @employee_router.get("/", status_code=status.HTTP_200_OK, response_model=list[ReadEmployee])
 async def get_employee(
-    session: Annotated[AsyncSession, Depends(get_async_session)],
+    empoyee_service: Annotated[EmployeeService, Depends(get_employee_service)],
 ):
-    employees = await EmployeeService.get_employees(session)
-    return employees
+    return await empoyee_service.get_employees()
 
 @employee_router.put("/", status_code=status.HTTP_200_OK, response_model=ReadEmployee)
 async def update_employee(
-    session: Annotated[AsyncSession, Depends(get_async_session)],
+    empoyee_service: Annotated[EmployeeService, Depends(get_employee_service)],
     id: UUID,
     employee_data: UpdateEmployee,
 ):
-    updated_employee = await EmployeeService.update_employee(session, id, employee_data)
+    updated_employee = await empoyee_service.update_employee(id, employee_data)
     return updated_employee
 
 @employee_router.delete("/", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_employee(
-    session: Annotated[AsyncSession, Depends(get_async_session)],
+    empoyee_service: Annotated[EmployeeService, Depends(get_employee_service)],
     id: UUID,
 ):
-    await EmployeeService.delete_employee(session, id)
+    try:
+        await empoyee_service.delete_employee(id)
+    except EmployeeNotFound:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Employee not found",
+        )
+    except EmployeeDeleteError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Employee cannot be deleted",
+        )
 
 @employee_router.get("/me", status_code=status.HTTP_200_OK, response_model=ReadEmployee)
 async def get_me(
@@ -45,11 +60,16 @@ async def get_me(
 
 @auth_router.post("/register", status_code=status.HTTP_201_CREATED, response_model=ReadEmployee)
 async def create_employee(
-    session: Annotated[AsyncSession, Depends(get_async_session)],
+    empoyee_service: Annotated[EmployeeService, Depends(get_employee_service)],
     employee_data: CreateEmployee,
 ):
-    new_employee = await EmployeeService.create_employee(session, employee_data)
-    return new_employee
+    try:
+        return await empoyee_service.create_employee(employee_data)
+    except EmployeeAlreadyExists:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Employee already exists",
+        )
 
 
 @auth_router.post("/login", status_code=status.HTTP_200_OK)
@@ -65,7 +85,7 @@ async def login(
             detail="Invalid credentials",
         )
     
-    token = await AuthService.create_access_token(employee.id)
+    token = AuthService.create_access_token(employee.id)
     response.set_cookie(
         "access_token",
         token,

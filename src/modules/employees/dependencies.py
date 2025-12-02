@@ -1,12 +1,15 @@
 from typing import Annotated
 
-from fastapi import Depends, HTTPException, Request, status
 import jwt
+from fastapi import Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.config import settings
 from core.db import get_async_session
+from core.redis import redis_client
 from modules.employees.repositories import EmployeeRepository
+from modules.employees.services import EmployeeService
+from modules.wazzup.employees import WazzupEmployees
 
 
 def get_token(request: Request):
@@ -39,3 +42,12 @@ async def get_current_employee(
     if user is None:
         raise credentials_exception
     return user
+
+def get_employee_service(
+    session: Annotated[AsyncSession, Depends(get_async_session)],
+):
+    return EmployeeService(
+        session=session,
+        redis_client=redis_client,
+        wazzup_employee=WazzupEmployees(),
+    )
