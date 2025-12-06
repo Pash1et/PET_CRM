@@ -3,8 +3,10 @@ from fastapi import APIRouter, HTTPException, Request, status, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.db import get_async_session
+from modules.contacts.dependencies import get_contact_service
 from modules.contacts.schemas import CreateContact, UpdateContact
 from modules.contacts.services import ContactService
+from modules.deals.dependencies import get_deal_service
 from modules.deals.schemas import CreateDeal
 from modules.deals.services import DealService
 
@@ -12,18 +14,22 @@ router = APIRouter(prefix="/wazzup", tags=["wazzup webhooks"])
 
 
 @router.post("/webhook", status_code=status.HTTP_200_OK)
-async def webhook(req: Request, session: Annotated[AsyncSession, Depends(get_async_session)]):
+async def webhook(
+    req: Request,
+    contact_service: Annotated[ContactService, Depends(get_contact_service)],
+    deals_service: Annotated[DealService, Depends(get_deal_service)],
+):
     payload = await req.json()
     print(payload)
     if "createDeal" in payload:
-        contact = await ContactService.get_one_or_none(session, id=payload["createDeal"]["contacts"][0])
+        contact = await contact_service.get_one_or_none(id=payload["createDeal"]["contacts"][0])
         if contact:
             deal_data = CreateDeal(
                 title=f"Сделка с контактом {contact.first_name} {contact.last_name}",
                 contact_id=contact.id,
                 responsible_user_id=payload["createDeal"]["responsibleUserId"]
             )
-            new_deal = await DealService.create_deal(session, deal_data, sync_to_wazzup=False)
+            new_deal = await deals_service.create_deal(deal_data, sync_to_wazzup=False)
             return {
                 "id": str(new_deal.id),
                 "responsibleUserId": str(new_deal.responsible_user_id),
@@ -33,8 +39,7 @@ async def webhook(req: Request, session: Annotated[AsyncSession, Depends(get_asy
                 "closed": False,
             }
     if "createContact" in payload:
-        contact = await ContactService.get_one_or_none(
-            session,
+        contact = await contact_service.get_one_or_none(
             telegram_username=payload["createContact"]["contactData"][0].get("username"),
         )
         if not contact:
@@ -46,7 +51,7 @@ async def webhook(req: Request, session: Annotated[AsyncSession, Depends(get_asy
                 telegram_username=payload["createContact"]["contactData"][0].get("username"),
                 responsible_user_id=payload["createContact"]["responsibleUserId"],
             )
-            new_contact = await ContactService.create_contact(session, contact_data, sync_to_wazzup=False)
+            new_contact = await contact_service.create_contact(contact_data, sync_to_wazzup=False)
             return {
                 "id": str(new_contact.id),
                 "responsibleUserId": str(new_contact.responsible_user_id),
@@ -62,7 +67,7 @@ async def webhook(req: Request, session: Annotated[AsyncSession, Depends(get_asy
         chat_id = payload["messages"][0]["chatId"]
         contact_chat_id = payload["messages"][0]["contact"].get("chatId")
         if chat_type == "telegram" and contact_chat_id is None:
-            contact = await ContactService.get_one_or_none(session, telegram_username=payload["messages"][0]["contact"]["username"])
-            await ContactService.update_contact(session, contact.id, UpdateContact(telegram_id=chat_id))
+            contact = await contact_service.get_one_or_none(telegram_username=payload["messages"][0]["contact"]["username"])
+            await contact_service.update_contact(contact.id, UpdateContact(telegram_id=chat_id))
 
     return {"status": "ok"}

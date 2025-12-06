@@ -2,7 +2,6 @@
 
 {% block content %}
 <div class="dashboard-container">
-
     <h1 class="title">CRM Dashboard</h1>
 
     <div class="tiles">
@@ -27,19 +26,13 @@
         </a>
 
         <a href="/ui/wazzup/" class="tile">
-            <div class="tile-title">Wazzup
-                <span class="badge"
-                    hx-get="/ui/wazzup/unread-count"
-                    hx-trigger="load, every 10s"
-                    hx-target="#wazzup-counter-inner"
-                    hx-swap="outerHTML">
-                    <span id="wazzup-counter-inner">0</span>
-                </span>
+            <div class="tile-title">
+                Wazzup
+                <span class="badge" id="wazzup-counter">0</span>
             </div>
             <div class="tile-desc">iFrame Wazzup</div>
         </a>
     </div>
-
 </div>
 
 <style>
@@ -102,16 +95,23 @@
         transform: none;
         box-shadow: none;
     }
-
-    .badge {
-        background: #e53935;
-        color: white;
-        padding: 2px 8px;
-        font-size: 12px;
-        border-radius: 10px;
-        margin-left: 8px;
-        font-weight: 600;
-    }
 </style>
 
+{% endblock %}
+
+{% block scripts %}
+<script>
+    async function updateWazzupCounter() {
+        try {
+            const response = await fetch('/ui/wazzup/unread-count');
+            const text = await response.text(); // используем text(), так как возвращаем HTML/число
+            document.getElementById('wazzup-counter').textContent = text.trim();
+        } catch (err) {
+            console.warn("Не удалось обновить счётчик Wazzup");
+        }
+    }
+
+    updateWazzupCounter();
+    setInterval(updateWazzupCounter, 10000);
+</script>
 {% endblock %}

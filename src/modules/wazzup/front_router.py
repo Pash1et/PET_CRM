@@ -40,6 +40,7 @@ async def unread_count_page(
 ):
     wazzup = UnansweredCount()
     res = await wazzup.get_unanswered_count(employee.id)
-    return f'<span id="wazzup-counter-inner">{res.json()["counterV2"]}</span>'
+    count = str(res.json()["counterV2"])
+    return count
 
 

@@ -12,7 +12,7 @@ router = APIRouter(prefix="/ui/contacts", tags=["UI Контакты"])
 
 @router.get("/", response_class=HTMLResponse)
 async def contacts_page(request: Request):
-    return templates.TemplateResponse("contacts/list.html", {"request": request})
+    return templates.TemplateResponse("contacts/contacts.html", {"request": request})
 
 @router.get("/partial", response_class=HTMLResponse)
 async def contacts_partial(
