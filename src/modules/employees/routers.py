@@ -10,7 +10,7 @@ from modules.employees.dependencies import (get_current_employee,
                                             get_employee_service)
 from modules.employees.exceptions import (EmployeeAlreadyExists,
                                           EmployeeDeleteError,
-                                          EmployeeNotFound)
+                                          EmployeeNotFound, LoginError)
 from modules.employees.models import Employee
 from modules.employees.schemas import (CreateEmployee, LoginEmployee,
                                        ReadEmployee, Token, UpdateEmployee)
@@ -79,11 +79,12 @@ async def login(
     credentials: LoginEmployee,
     session: Annotated[AsyncSession, Depends(get_async_session)],
 ):
-    employee = await AuthService.authenticate_employee(session, credentials.email, credentials.password)
-    if not employee:
+    try:
+        employee = await AuthService.authenticate_employee(session, credentials.email, credentials.password)
+    except LoginError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid credentials",
+            detail="Invalid credentials or account inactive",
         )
     
     token = AuthService.create_access_token(employee.id)

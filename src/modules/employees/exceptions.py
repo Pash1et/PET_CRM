@@ -10,3 +10,6 @@ class EmployeeDeleteError(EmployeeError):
 
 class EmployeeAlreadyExists(EmployeeError):
     pass
+
+class LoginError(EmployeeError):
+    pass
