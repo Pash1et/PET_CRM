@@ -1,6 +1,6 @@
 from typing import Annotated
-from fastapi import Depends, FastAPI, Request
-from fastapi.responses import HTMLResponse
+from fastapi import Depends, FastAPI, HTTPException, Request, status
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from modules.contacts.routers import router as contacts_router
@@ -26,6 +26,10 @@ async def dashboard(
     employee: Annotated[ReadEmployee, Depends(get_current_employee)]
 ):
     return templates.TemplateResponse("dashboard.html", {"request": request})
+
+@app.get("/ui/login", response_class=HTMLResponse)
+async def login_page(request: Request):
+    return templates.TemplateResponse("login.html", {"request": request})
 
 
 @app.get("/")

@@ -1,8 +1,6 @@
 from typing import Annotated
-from fastapi import APIRouter, HTTPException, Request, status, Depends
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter, Request, status, Depends
 
-from core.db import get_async_session
 from modules.contacts.dependencies import get_contact_service
 from modules.contacts.schemas import CreateContact, UpdateContact
 from modules.contacts.services import ContactService

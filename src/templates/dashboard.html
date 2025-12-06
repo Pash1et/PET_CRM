@@ -104,7 +104,7 @@
     async function updateWazzupCounter() {
         try {
             const response = await fetch('/ui/wazzup/unread-count');
-            const text = await response.text(); // используем text(), так как возвращаем HTML/число
+            const text = await response.text();
             document.getElementById('wazzup-counter').textContent = text.trim();
         } catch (err) {
             console.warn("Не удалось обновить счётчик Wazzup");

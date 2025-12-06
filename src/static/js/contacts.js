@@ -1,4 +1,3 @@
-// src/static/js/contacts.js
 class ContactsUI {
     constructor() {
         this.list = document.getElementById('contacts-list');
@@ -8,7 +7,6 @@ class ContactsUI {
         this.setupEventListeners();
         this.loadContacts();
 
-        // Обновлять каждые 10 секунд
         setInterval(() => this.loadContacts(), 10000);
     }
 
@@ -47,7 +45,7 @@ class ContactsUI {
 
             if (response.ok) {
                 this.form.reset();
-                this.loadContacts(); // Обновим список
+                this.loadContacts();
             } else {
                 const error = await response.json();
                 alert(`Ошибка: ${error.detail || 'Не удалось добавить'}`);
@@ -78,38 +76,49 @@ class ContactsUI {
     }
 
     renderContacts(contacts) {
-        this.list.innerHTML = '';
+    this.list.innerHTML = '';
 
-        if (contacts.length === 0) {
-            this.emptyState.textContent = 'Нет контактов';
-            return;
-        }
-
-        this.emptyState.textContent = '';
-
-        contacts.forEach(contact => {
-            const card = document.createElement('div');
-            card.className = 'contact-card';
-            card.id = `contact-${contact.id}`;
-
-            card.innerHTML = `
-                <div>
-                    <div class="contact-name">${this.escape(contact.first_name)} ${this.escape(contact.last_name)}</div>
-                    <div class="contact-detail">
-                        Telegram: @${this.escape(contact.telegram_username) || '—'}
-                    </div>
-                </div>
-                <button class="delete" data-id="${contact.id}">Удалить</button>
-            `;
-
-            const deleteBtn = card.querySelector('.delete');
-            deleteBtn.addEventListener('click', () => {
-                this.deleteContact(contact.id);
-            });
-
-            this.list.appendChild(card);
-        });
+    if (contacts.length === 0) {
+        this.emptyState.textContent = 'Нет контактов';
+        return;
     }
+
+    this.emptyState.textContent = '';
+
+    contacts.forEach(contact => {
+        const card = document.createElement('div');
+        card.className = 'contact-card';
+        card.id = `contact-${contact.id}`;
+
+        const fullName = `${this.escape(contact.first_name)} ${this.escape(contact.last_name)}`.trim() || 'Без имени';
+
+        card.innerHTML = `
+            <div>
+                <div class="contact-name">${fullName}</div>
+                <div class="contact-detail">
+                    Telegram: @${this.escape(contact.telegram_username) || '—'}
+                </div>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <a href="/ui/wazzup/chat-card/${contact.id}"
+                   target="_blank"
+                   class="open-chat"
+                   title="Открыть чат в Wazzup">
+                    Чат
+                </a>
+                <button class="delete" data-id="${contact.id}">Удалить</button>
+            </div>
+        `;
+
+        const deleteBtn = card.querySelector('.delete');
+        deleteBtn.addEventListener('click', () => {
+            this.deleteContact(contact.id);
+        });
+
+        this.list.appendChild(card);
+    });
+}
+
 
     escape(str) {
         const div = document.createElement('div');
@@ -124,7 +133,6 @@ class ContactsUI {
     }
 }
 
-// Запуск при загрузке
 document.addEventListener('DOMContentLoaded', () => {
     new ContactsUI();
 });
