@@ -8,15 +8,48 @@
                 {% endif %}
             </div>
 
-            <button type="button"
-                    class="delete"
-                    hx-delete="/ui/contacts/{{ c.id }}"
-                    hx-target="#contact-{{ c.id }}"
-                    hx-swap="outerHTML">
-                Удалить
-            </button>
+            <div class="actions">
+                <a href="/ui/wazzup/chat-card/{{ c.id }}" 
+                   target="_blank"
+                   class="open-chat">
+                    Чат
+                </a>
+
+                <button type="button"
+                        class="delete"
+                        hx-delete="/ui/contacts/{{ c.id }}"
+                        hx-target="#contact-{{ c.id }}"
+                        hx-swap="outerHTML">
+                    Удалить
+                </button>
+            </div>
         </div>
     {% endfor %}
 {% else %}
     <div class="empty">Контактов пока нет</div>
 {% endif %}
+
+<style>
+.contact-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.actions {
+    display: flex;
+    gap: 8px;
+}
+
+.open-chat {
+    background: #1a73e8;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 6px;
+    text-decoration: none;
+}
+
+.open-chat:hover {
+    background: #165ec2;
+}
+</style>

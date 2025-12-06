@@ -11,6 +11,7 @@ from modules.employees.dependencies import (get_current_employee,
 from modules.employees.exceptions import (EmployeeAlreadyExists,
                                           EmployeeDeleteError,
                                           EmployeeNotFound)
+from modules.employees.models import Employee
 from modules.employees.schemas import (CreateEmployee, LoginEmployee,
                                        ReadEmployee, Token, UpdateEmployee)
 from modules.employees.services import AuthService, EmployeeService
@@ -21,26 +22,26 @@ auth_router = APIRouter(prefix="/auth", tags=["auth"])
 
 @employee_router.get("/", status_code=status.HTTP_200_OK, response_model=list[ReadEmployee])
 async def get_employee(
-    empoyee_service: Annotated[EmployeeService, Depends(get_employee_service)],
+    employee_service: Annotated[EmployeeService, Depends(get_employee_service)],
 ):
-    return await empoyee_service.get_employees()
+    return await employee_service.get_employees()
 
-@employee_router.put("/", status_code=status.HTTP_200_OK, response_model=ReadEmployee)
+@employee_router.put("/{id}", status_code=status.HTTP_200_OK, response_model=ReadEmployee)
 async def update_employee(
-    empoyee_service: Annotated[EmployeeService, Depends(get_employee_service)],
+    employee_service: Annotated[EmployeeService, Depends(get_employee_service)],
     id: UUID,
     employee_data: UpdateEmployee,
 ):
-    updated_employee = await empoyee_service.update_employee(id, employee_data)
+    updated_employee = await employee_service.update_employee(id, employee_data)
     return updated_employee
 
-@employee_router.delete("/", status_code=status.HTTP_204_NO_CONTENT)
+@employee_router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_employee(
-    empoyee_service: Annotated[EmployeeService, Depends(get_employee_service)],
+    employee_service: Annotated[EmployeeService, Depends(get_employee_service)],
     id: UUID,
 ):
     try:
-        await empoyee_service.delete_employee(id)
+        await employee_service.delete_employee(id)
     except EmployeeNotFound:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -54,17 +55,17 @@ async def delete_employee(
 
 @employee_router.get("/me", status_code=status.HTTP_200_OK, response_model=ReadEmployee)
 async def get_me(
-    employee: Annotated[ReadEmployee, Depends(get_current_employee)],
+    employee: Annotated[Employee, Depends(get_current_employee)],
 ):
     return employee
 
 @auth_router.post("/register", status_code=status.HTTP_201_CREATED, response_model=ReadEmployee)
 async def create_employee(
-    empoyee_service: Annotated[EmployeeService, Depends(get_employee_service)],
+    employee_service: Annotated[EmployeeService, Depends(get_employee_service)],
     employee_data: CreateEmployee,
 ):
     try:
-        return await empoyee_service.create_employee(employee_data)
+        return await employee_service.create_employee(employee_data)
     except EmployeeAlreadyExists:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
