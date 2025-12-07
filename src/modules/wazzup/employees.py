@@ -1,4 +1,5 @@
 from uuid import UUID
+
 from modules.wazzup.client import WazzupClient
 
 

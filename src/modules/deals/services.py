@@ -37,13 +37,14 @@ class DealService:
 
         return new_deal
     
-    async def get_one_or_none(self, id: UUID) -> Deal | None:
-        return await DealRepository.get_one_or_none(self.session, id)
-    
-    async def delete_deal(self, id: UUID) -> None:
-        deal = await self.get_one_or_none(id)
+    async def get_one_or_none(self, id: UUID) -> Deal:
+        deal = await DealRepository.get_one_or_none(self.session, id)
         if not deal:
             raise DealNotFound()
+        return deal
+
+    async def delete_deal(self, id: UUID) -> None:
+        deal = await self.get_one_or_none(id)
 
         deleted = await DealRepository.delete_deal(self.session, id)
         if not deleted:
@@ -52,9 +53,7 @@ class DealService:
         await self.wazzup_deals.delete_deal(deal.id)
 
     async def update_deal(self, id: UUID, deal_data: UpdateDeal) -> Deal:
-        deal = await self.get_one_or_none(id)
-        if not deal:
-            raise DealNotFound()
+        await self.get_one_or_none(id)
 
         filtered_data = deal_data.model_dump(exclude_unset=True)
         updated_deal = await DealRepository.update_deal(self.session, id, filtered_data)

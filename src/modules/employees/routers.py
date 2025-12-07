@@ -1,16 +1,13 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.config import settings
 from core.db import get_async_session
-from modules.employees.dependencies import (get_current_employee,
+from modules.employees.dependencies import (get_admin, get_current_employee,
                                             get_employee_service)
-from modules.employees.exceptions import (EmployeeAlreadyExists,
-                                          EmployeeDeleteError,
-                                          EmployeeNotFound, LoginError)
 from modules.employees.models import Employee
 from modules.employees.schemas import (CreateEmployee, LoginEmployee,
                                        ReadEmployee, Token, UpdateEmployee)
@@ -20,7 +17,12 @@ employee_router = APIRouter(prefix="/employee", tags=["employees"])
 auth_router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-@employee_router.get("/", status_code=status.HTTP_200_OK, response_model=list[ReadEmployee])
+@employee_router.get(
+    "/",
+    dependencies=[Depends(get_admin)],
+    status_code=status.HTTP_200_OK,
+    response_model=list[ReadEmployee],
+)
 async def get_employee(
     employee_service: Annotated[EmployeeService, Depends(get_employee_service)],
 ):
@@ -40,18 +42,7 @@ async def delete_employee(
     employee_service: Annotated[EmployeeService, Depends(get_employee_service)],
     id: UUID,
 ):
-    try:
-        await employee_service.delete_employee(id)
-    except EmployeeNotFound:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Employee not found",
-        )
-    except EmployeeDeleteError:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Employee cannot be deleted",
-        )
+    await employee_service.delete_employee(id)
 
 @employee_router.get("/me", status_code=status.HTTP_200_OK, response_model=ReadEmployee)
 async def get_me(
@@ -64,14 +55,7 @@ async def create_employee(
     employee_service: Annotated[EmployeeService, Depends(get_employee_service)],
     employee_data: CreateEmployee,
 ):
-    try:
-        return await employee_service.create_employee(employee_data)
-    except EmployeeAlreadyExists:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Employee already exists",
-        )
-
+    return await employee_service.create_employee(employee_data)
 
 @auth_router.post("/login", status_code=status.HTTP_200_OK)
 async def login(
@@ -79,13 +63,7 @@ async def login(
     credentials: LoginEmployee,
     session: Annotated[AsyncSession, Depends(get_async_session)],
 ):
-    try:
-        employee = await AuthService.authenticate_employee(session, credentials.email, credentials.password)
-    except LoginError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid credentials or account inactive",
-        )
+    employee = await AuthService.authenticate_employee(session, credentials.email, credentials.password)
     
     token = AuthService.create_access_token(employee.id)
     response.set_cookie(
@@ -97,9 +75,10 @@ async def login(
     return Token(access_token=token, token_type="Bearer")
 
 
-@auth_router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
-async def logout(
-    response: Response,
-    employee: Annotated[ReadEmployee, Depends(get_current_employee)],
-):
+@auth_router.post(
+    "/logout",
+    dependencies=[Depends(get_current_employee)],
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def logout(response: Response):
     response.delete_cookie("access_token")

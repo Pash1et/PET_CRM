@@ -1,10 +1,15 @@
-class DealError(Exception):
+from exceptions import BaseProjectException
+
+
+class DealError(BaseProjectException):
     """Base exception for deals module."""
 
 
 class DealNotFound(DealError):
-    pass
+    status_code = 404
+    detail = "Deal not found"
 
 
 class DealDeleteError(DealError):
-    pass
+    status_code = 400
+    detail = "Deal cannot be deleted"

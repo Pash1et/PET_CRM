@@ -1,5 +1,6 @@
 from typing import Annotated
 from uuid import UUID
+
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -9,7 +10,6 @@ from modules.employees.dependencies import get_current_employee
 from modules.employees.models import Employee
 from modules.wazzup.iframe import WazzupIframe
 from modules.wazzup.unanswered_count import UnansweredCount
-
 
 templates = Jinja2Templates(directory="src/templates")
 

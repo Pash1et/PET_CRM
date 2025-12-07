@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from core.config import settings
 from modules.employees.exceptions import (EmployeeAlreadyExists,
                                           EmployeeDeleteError,
-                                          EmployeeNotFound, LoginError)
+                                          EmployeeLoginError, EmployeeNotFound)
 from modules.employees.models import Employee
 from modules.employees.repositories import EmployeeRepository
 from modules.employees.schemas import UpdateEmployee
@@ -92,7 +92,7 @@ class AuthService:
 
         if employee and verify_password(password, employee.hashed_password) and employee.is_active:
             return employee
-        raise LoginError()
+        raise EmployeeLoginError()
     
     @staticmethod
     def create_access_token(employee_id: UUID) -> str:

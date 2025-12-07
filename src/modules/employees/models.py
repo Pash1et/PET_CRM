@@ -15,3 +15,4 @@ class Employee(Base):
     email: Mapped[str] = mapped_column(unique=True)
     hashed_password: Mapped[str]
     is_active: Mapped[bool] = mapped_column(default=False, server_default="false")
+    is_admin: Mapped[bool] = mapped_column(default=False, server_default="false")

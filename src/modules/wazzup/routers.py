@@ -1,5 +1,6 @@
 from typing import Annotated
-from fastapi import APIRouter, Request, status, Depends
+
+from fastapi import APIRouter, Depends, Request, status
 
 from modules.contacts.dependencies import get_contact_service
 from modules.contacts.schemas import CreateContact, UpdateContact

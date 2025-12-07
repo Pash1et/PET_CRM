@@ -25,11 +25,11 @@ class ContactService:
         self.redis_client = redis_client
         self.wazzup_contacts = wazzup_contacts
 
-    async def get_contacts(self):
+    async def get_contacts(self) -> list[Contact]:
         contacts = await ContactRepository.get_all_contacts(self.session)
         return contacts
 
-    async def create_contact(self, contact_data: CreateContact, sync_to_wazzup: bool = True):
+    async def create_contact(self, contact_data: CreateContact, sync_to_wazzup: bool = True) -> Contact:
         contact_data = contact_data.model_dump(exclude_unset=True)
         is_exist = await ContactRepository.find_existing_contact(
             self.session,
@@ -50,14 +50,14 @@ class ContactService:
 
         return new_contact
     
-    async def get_one_or_none(self, **filter_by):
-        return await ContactRepository.get_one_or_none(self.session, **filter_by)
-    
-    async def delete_contact(self, id: UUID):
-        contact = await self.get_one_or_none(id=id)
-
+    async def get_one_or_none(self, **filter_by) -> Contact:
+        contact = await ContactRepository.get_one_or_none(self.session, **filter_by)
         if not contact:
             raise ContactNotFound()
+        return contact
+
+    async def delete_contact(self, id: UUID) -> None:
+        contact = await self.get_one_or_none(id=id)
     
         deleted = await ContactRepository.delete_contact(self.session, id)
     
@@ -67,10 +67,8 @@ class ContactService:
         await self.wazzup_contacts.delete_contact(contact.id)
 
     async def update_contact(self, id: UUID, contact_data: UpdateContact) -> Contact:
-        contact = await self.get_one_or_none(id=id)
-        if not contact:
-            raise ContactNotFound()
-        
+        await self.get_one_or_none(id=id)
+
         filtered_data = contact_data.model_dump(exclude_unset=True)
         updated_contact = await ContactRepository.update_contact(self.session, id, filtered_data)
 
