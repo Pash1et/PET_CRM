@@ -6,8 +6,8 @@ from modules.wazzup.client import WazzupClient
 class UnansweredCount:
     BASE_URL = "/unanswered"
 
-    def __init__(self):
-        self.client = WazzupClient()
+    def __init__(self, client: WazzupClient):
+        self.client = client
 
     async def get_unanswered_count(self, user_id: UUID):
         return await self.client.get(f"{self.BASE_URL}/{user_id}")

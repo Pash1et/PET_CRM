@@ -12,12 +12,14 @@ from modules.employees.dependencies import get_current_employee
 from modules.employees.routers import auth_router, employee_router
 from modules.wazzup.front_router import router as wazzup_front_router
 from modules.wazzup.routers import router as wazzup_router
+from modules.deals.front_router import router as deals_front_router
 
 app = FastAPI(title="CRM", version="0.0.1")
 app.mount("/static", StaticFiles(directory="src/static"), name="static")
 
 app.include_router(contacts_front_router)
 app.include_router(wazzup_front_router)
+app.include_router(deals_front_router)
 
 @app.get(
     "/ui",

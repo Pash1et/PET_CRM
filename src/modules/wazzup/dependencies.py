@@ -1,5 +1,7 @@
 from typing import AsyncGenerator
+
 import httpx
+
 from core.config import settings
 from modules.wazzup.client import WazzupClient
 
