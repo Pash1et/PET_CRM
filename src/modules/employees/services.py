@@ -14,10 +14,10 @@ from modules.employees.repositories import EmployeeRepository
 from modules.employees.schemas import UpdateEmployee
 from modules.employees.utils import get_password_hash, verify_password
 from modules.wazzup.employees import WazzupEmployees
+from modules.wazzup.exceptions import WazzupError
 
 
 class EmployeeService:
-
     def __init__(
         self,
         session: AsyncSession,
@@ -45,10 +45,13 @@ class EmployeeService:
 
         await self.redis_client.rpush("employee_queue", str(new_employee.id))
 
-        await self.wazzup_employee.create_employee([{
-            "id": str(new_employee.id),
-            "name": f"{new_employee.first_name} {new_employee.last_name}"
-        }])
+        try:
+            await self.wazzup_employee.create_employee([{
+                "id": str(new_employee.id),
+                "name": f"{new_employee.first_name} {new_employee.last_name}"
+            }])
+        except WazzupError as e:
+            print("Wazzup sync failed, will retry", e) # TODO: Убрать принт и добавить логгер
 
         return new_employee
     
@@ -66,8 +69,11 @@ class EmployeeService:
             raise EmployeeDeleteError()
 
         await self.redis_client.lrem("employee_queue", 0, str(employee.id))
-        
-        await self.wazzup_employee.delete_employee(employee.id)
+
+        try:
+            await self.wazzup_employee.delete_employee(employee.id)
+        except WazzupError as e:
+            print("Wazzup sync failed, will retry", e) # TODO: Убрать принт и добавить логгер
 
     async def update_employee(self, id: UUID, employee_data: UpdateEmployee) -> Employee | None:
         employee = await EmployeeRepository.get_one_or_none(self.session, id=id)
@@ -77,10 +83,13 @@ class EmployeeService:
         filtered_data = employee_data.model_dump(exclude_unset=True)
         updated_employee = await EmployeeRepository.update_employee(self.session, id, filtered_data)
         
-        await self.wazzup_employee.update_employee([{
-            "id": str(updated_employee.id),
-            "name": f"{updated_employee.first_name} {updated_employee.last_name}"
-        }])
+        try:
+            await self.wazzup_employee.update_employee([{
+                "id": str(updated_employee.id),
+                "name": f"{updated_employee.first_name} {updated_employee.last_name}"
+            }])
+        except WazzupError as e:
+            print("Wazzup sync failed, will retry", e) # TODO: Убрать принт и добавить логгер
 
         return updated_employee
 

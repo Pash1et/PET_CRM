@@ -3,7 +3,6 @@ from uuid import UUID
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.redis import redis_client
 from modules.contacts.exceptions import (ContactAlreadyExists,
                                          ContactDeleteError, ContactNotFound)
 from modules.contacts.models import Contact
@@ -11,10 +10,10 @@ from modules.contacts.repositories import ContactRepository
 from modules.contacts.schemas import CreateContact, UpdateContact
 from modules.contacts.utils import build_wazzup_contact_data
 from modules.wazzup.contacts import WazzupContacts
+from modules.wazzup.exceptions import WazzupError, WazzupUnavailable
 
 
 class ContactService:
-
     def __init__(
         self,
         session: AsyncSession,
@@ -41,12 +40,16 @@ class ContactService:
             raise ContactAlreadyExists()
 
         if contact_data.get("responsible_user_id") is None:
-            contact_data["responsible_user_id"] = await redis_client.rpoplpush("employee_queue", "employee_queue")
+            contact_data["responsible_user_id"] = await self.redis_client.rpoplpush("employee_queue", "employee_queue")
         new_contact = await ContactRepository.create_contact(self.session, contact_data) 
 
         if sync_to_wazzup:
             wazzup_contact_data = build_wazzup_contact_data(new_contact)
-            await self.wazzup_contacts.create_contact(wazzup_contact_data)
+            try:
+                await self.wazzup_contacts.create_contact(wazzup_contact_data)
+            except WazzupError as e:
+                # raise WazzupUnavailable()
+                print("Wazzup sync failed, will retry", e) # TODO: Убрать принт и добавить логгер
 
         return new_contact
     
@@ -63,8 +66,11 @@ class ContactService:
     
         if not deleted:
             raise ContactDeleteError()
-
-        await self.wazzup_contacts.delete_contact(contact.id)
+        
+        try:
+            await self.wazzup_contacts.delete_contact(contact.id)
+        except WazzupError as e:
+            print("Wazzup sync failed, will retry", e) # TODO: Убрать принт и добавить логгер
 
     async def update_contact(self, id: UUID, contact_data: UpdateContact) -> Contact:
         await self.get_one_or_none(id=id)
@@ -73,6 +79,9 @@ class ContactService:
         updated_contact = await ContactRepository.update_contact(self.session, id, filtered_data)
 
         wazzup_contact_data = build_wazzup_contact_data(updated_contact)
-        await self.wazzup_contacts.update_contact(wazzup_contact_data)
+        try:
+            await self.wazzup_contacts.update_contact(wazzup_contact_data)
+        except WazzupError as e:
+            print("Wazzup sync failed, will retry", e) # TODO: Убрать принт и добавить логгер
 
         return updated_contact

@@ -1,7 +1,7 @@
 from typing import Annotated
 
 import jwt
-from fastapi import Depends, HTTPException, Request, status
+from fastapi import Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.config import settings
@@ -11,15 +11,21 @@ from modules.employees.exceptions import EmployeeForbidden, EmployeeLoginError
 from modules.employees.models import Employee
 from modules.employees.repositories import EmployeeRepository
 from modules.employees.services import EmployeeService
+from modules.wazzup.client import WazzupClient
+from modules.wazzup.dependencies import get_wazzup_client
 from modules.wazzup.employees import WazzupEmployees
 
+
+async def get_wazzup_employees(
+    client: Annotated[WazzupClient, Depends(get_wazzup_client)]
+):
+    return WazzupClient(client)
 
 def get_token(request: Request):
     access_token = request.cookies.get("access_token")
     if not access_token:
         raise EmployeeLoginError(detail="Invalid credentials")
     return access_token
-
 
 async def get_current_employee(
     session: Annotated[AsyncSession, Depends(get_async_session)],
@@ -39,11 +45,12 @@ async def get_current_employee(
 
 def get_employee_service(
     session: Annotated[AsyncSession, Depends(get_async_session)],
+    wazzup_employee: Annotated[WazzupEmployees, Depends(get_wazzup_employees)],
 ):
     return EmployeeService(
         session=session,
         redis_client=redis_client,
-        wazzup_employee=WazzupEmployees(),
+        wazzup_employee=wazzup_employee,
     )
 
 async def get_admin(
