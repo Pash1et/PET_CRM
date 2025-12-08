@@ -1,6 +1,7 @@
+from datetime import date
 from uuid import UUID
 
-from sqlalchemy import delete, select, update
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from modules.deals.models import Deal
@@ -40,3 +41,9 @@ class DealRepository:
         result = await session.execute(query)
         await session.commit()
         return result.scalar_one()
+    
+    @staticmethod
+    async def get_count_deals_by_date(session: AsyncSession, start: date, end: date) -> int:
+        query = select(func.count()).select_from(Deal).where(func.date(Deal.created_at).between(start, end))
+        res = await session.execute(query)
+        return res.scalar_one()

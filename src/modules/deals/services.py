@@ -1,3 +1,4 @@
+from datetime import date, timedelta
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -68,4 +69,17 @@ class DealService:
             "closed": closed,
         }])
         return updated_deal
+    
+    async def get_deals_by_period(self):
+        today = date.today()
+        yesterday = today - timedelta(days=1)
+        week_start = today - timedelta(days=6)
+        month_start = today.replace(day=1)
         
+        periods = {
+            "today": await DealRepository.get_count_deals_by_date(self.session, today, today),
+            "yesterday": await DealRepository.get_count_deals_by_date(self.session, yesterday, yesterday),
+            "week": await DealRepository.get_count_deals_by_date(self.session, week_start, today),
+            "month": await DealRepository.get_count_deals_by_date(self.session, month_start, today),
+        }
+        return {"periods": periods}

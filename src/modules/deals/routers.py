@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, status
 from modules.deals.dependencies import get_deal_service
 from modules.deals.schemas import CreateDeal, ReadDeal, UpdateDeal
 from modules.deals.services import DealService
+from modules.employees.dependencies import get_current_employee
 
 router = APIRouter(prefix="/deals", tags=["Deals"])
 
@@ -35,3 +36,12 @@ async def update_deal(
     deal_data: UpdateDeal,
 ):
     return await deals_service.update_deal(id, deal_data)
+
+@router.get(
+    "/stats",
+    dependencies=[Depends(get_current_employee)]
+)
+async def get_deals_stats(
+    deals_service: Annotated[DealService, Depends(get_deal_service)],
+):
+    return await deals_service.get_deals_by_period()
