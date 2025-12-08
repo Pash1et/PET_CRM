@@ -45,3 +45,15 @@ async def get_deals_stats(
     deals_service: Annotated[DealService, Depends(get_deal_service)],
 ):
     return await deals_service.get_deals_by_period()
+
+@router.get(
+    "/{id}",
+    dependencies=[Depends(get_current_employee)],
+    status_code=status.HTTP_200_OK,
+    response_model=ReadDeal,
+)
+async def get_deal(
+    deals_service: Annotated[DealService, Depends(get_deal_service)],
+    id: UUID,
+):
+    return await deals_service.get_one_or_none(id=id)
