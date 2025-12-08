@@ -8,7 +8,7 @@ from modules.contacts.schemas import CreateContact, ReadContact, UpdateContact
 from modules.contacts.services import ContactService
 from modules.employees.dependencies import get_admin, get_current_employee
 
-router = APIRouter(prefix="/contacts", tags=["contacts"])
+router = APIRouter(prefix="/contacts", tags=["Contacts"])
 
 
 @router.get(

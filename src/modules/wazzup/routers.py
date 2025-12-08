@@ -1,4 +1,5 @@
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, Request, status
 
@@ -8,8 +9,14 @@ from modules.contacts.services import ContactService
 from modules.deals.dependencies import get_deal_service
 from modules.deals.schemas import CreateDeal
 from modules.deals.services import DealService
+from modules.employees.dependencies import get_current_employee
+from modules.employees.models import Employee
+from modules.wazzup.client import WazzupClient
+from modules.wazzup.dependencies import get_wazzup_client
+from modules.wazzup.iframe import WazzupIframe
+from modules.wazzup.unanswered_count import UnansweredCount
 
-router = APIRouter(prefix="/wazzup", tags=["wazzup webhooks"])
+router = APIRouter(prefix="/wazzup", tags=["Wazzup"])
 
 
 @router.post("/webhook", status_code=status.HTTP_200_OK)
@@ -70,3 +77,54 @@ async def webhook(
             await contact_service.update_contact(contact.id, UpdateContact(telegram_id=chat_id))
 
     return {"status": "ok"}
+
+@router.get("/unread-count")
+async def get_unread_count(
+    employee: Annotated[Employee, Depends(get_current_employee)],
+    wazzup_client: Annotated[WazzupClient, Depends(get_wazzup_client)],
+):
+    wazzup = UnansweredCount(wazzup_client)
+    res = await wazzup.get_unanswered_count(employee.id)
+    count = res.json()["counterV2"]
+    return count
+
+@router.get("/wazzup-global-widget")
+async def get_wazzup_global_widget(
+    employee: Annotated[Employee, Depends(get_current_employee)],
+    wazzup_client: Annotated[WazzupClient, Depends(get_wazzup_client)],
+): 
+    wazzup = WazzupIframe(wazzup_client)
+    res = await wazzup.get_iframe_url({
+        "user": {
+            "id": str(employee.id),
+            "name": f"{employee.first_name} {employee.last_name}"
+        },
+        "scope": "global",
+    })
+    iframe_url = res.json()
+    return iframe_url
+
+@router.get("/wazzup-card-widget/{id}")
+async def get_wazzup_card_widget(
+    employee: Annotated[Employee, Depends(get_current_employee)],
+    wazzup_client: Annotated[WazzupClient, Depends(get_wazzup_client)],
+    contacts_service: Annotated[ContactService, Depends(get_contact_service)],
+    id: UUID,
+): 
+    contact = await contacts_service.get_one_or_none(id=id)
+    wazzup = WazzupIframe(wazzup_client)
+    res = await wazzup.get_iframe_url({
+        "user": {
+            "id": str(employee.id),
+            "name": f"{employee.first_name} {employee.last_name}"
+        },
+        "scope": "card",
+        "filter": [
+        {
+            "chatType": "telegram",
+            "chatId": contact.telegram_id,
+        }
+    ]
+    })
+    iframe_url = res.json()
+    return iframe_url

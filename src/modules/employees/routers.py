@@ -13,8 +13,8 @@ from modules.employees.schemas import (CreateEmployee, LoginEmployee,
                                        ReadEmployee, Token, UpdateEmployee)
 from modules.employees.services import AuthService, EmployeeService
 
-employee_router = APIRouter(prefix="/employee", tags=["employees"])
-auth_router = APIRouter(prefix="/auth", tags=["auth"])
+employee_router = APIRouter(prefix="/employee", tags=["Employees"])
+auth_router = APIRouter(prefix="/auth", tags=["Auth"])
 
 
 @employee_router.get(

@@ -1,38 +1,14 @@
-from fastapi import Depends, FastAPI, Request
+from fastapi import FastAPI, Request
 from fastapi.exceptions import ResponseValidationError
-from fastapi.responses import HTMLResponse, JSONResponse
-from fastapi.staticfiles import StaticFiles
+from fastapi.responses import JSONResponse
 
 from exceptions import BaseProjectException
-from modules.contacts.front_router import router as contacts_front_router
-from modules.contacts.front_router import templates
 from modules.contacts.routers import router as contacts_router
 from modules.deals.routers import router as deals_router
-from modules.employees.dependencies import get_current_employee
 from modules.employees.routers import auth_router, employee_router
-from modules.wazzup.front_router import router as wazzup_front_router
 from modules.wazzup.routers import router as wazzup_router
-from modules.deals.front_router import router as deals_front_router
 
 app = FastAPI(title="CRM", version="0.0.1")
-app.mount("/static", StaticFiles(directory="src/static"), name="static")
-
-app.include_router(contacts_front_router)
-app.include_router(wazzup_front_router)
-app.include_router(deals_front_router)
-
-@app.get(
-    "/ui",
-    dependencies=[Depends(get_current_employee)],
-    response_class=HTMLResponse,
-)
-async def dashboard(request: Request):
-    return templates.TemplateResponse("dashboard.html", {"request": request})
-
-@app.get("/ui/login", response_class=HTMLResponse)
-async def login_page(request: Request):
-    return templates.TemplateResponse("login.html", {"request": request})
-
 
 @app.get("/")
 async def check_health():

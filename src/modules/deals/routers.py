@@ -7,7 +7,7 @@ from modules.deals.dependencies import get_deal_service
 from modules.deals.schemas import CreateDeal, ReadDeal, UpdateDeal
 from modules.deals.services import DealService
 
-router = APIRouter(prefix="/deals", tags=["deals"])
+router = APIRouter(prefix="/deals", tags=["Deals"])
 
 
 @router.get("/", status_code=status.HTTP_200_OK, response_model=list[ReadDeal])
