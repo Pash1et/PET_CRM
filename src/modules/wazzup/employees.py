@@ -6,8 +6,8 @@ from modules.wazzup.client import WazzupClient
 class WazzupEmployees:
     BASE_URL = "/users"
 
-    def __init__(self):
-        self.client = WazzupClient()
+    def __init__(self, client: WazzupClient):
+        self.client = client
 
     async def create_employee(self, data: list):
         return await self.client.post(self.BASE_URL, data=data)

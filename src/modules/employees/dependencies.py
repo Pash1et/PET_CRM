@@ -18,8 +18,8 @@ from modules.wazzup.employees import WazzupEmployees
 
 async def get_wazzup_employees(
     client: Annotated[WazzupClient, Depends(get_wazzup_client)]
-):
-    return WazzupClient(client)
+) -> WazzupEmployees:
+    return WazzupEmployees(client)
 
 def get_token(request: Request):
     access_token = request.cookies.get("access_token")
