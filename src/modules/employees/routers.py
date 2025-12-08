@@ -10,7 +10,7 @@ from modules.employees.dependencies import (get_admin, get_current_employee,
                                             get_employee_service)
 from modules.employees.models import Employee
 from modules.employees.schemas import (CreateEmployee, LoginEmployee,
-                                       ReadEmployee, Token, UpdateEmployee)
+                                       ReadEmployee, ReadEmployeeForAdmin, Token, UpdateEmployee)
 from modules.employees.services import AuthService, EmployeeService
 
 employee_router = APIRouter(prefix="/employee", tags=["Employees"])
@@ -21,14 +21,53 @@ auth_router = APIRouter(prefix="/auth", tags=["Auth"])
     "/",
     dependencies=[Depends(get_admin)],
     status_code=status.HTTP_200_OK,
-    response_model=list[ReadEmployee],
+    response_model=list[ReadEmployeeForAdmin],
 )
-async def get_employee(
+async def get_employees(
     employee_service: Annotated[EmployeeService, Depends(get_employee_service)],
 ):
     return await employee_service.get_employees()
 
-@employee_router.put("/{id}", status_code=status.HTTP_200_OK, response_model=ReadEmployee)
+@employee_router.get(
+    "/me",
+    status_code=status.HTTP_200_OK,
+    response_model=ReadEmployee,
+)
+async def get_me(
+    employee: Annotated[Employee, Depends(get_current_employee)],
+):
+    return employee
+
+@employee_router.get(
+    "/{id}",
+    dependencies=[Depends(get_admin)],
+    status_code=status.HTTP_200_OK,
+    response_model=ReadEmployeeForAdmin,
+)
+async def get_employee(
+    employee_service: Annotated[EmployeeService, Depends(get_employee_service)],
+    id: UUID,
+):
+    return await employee_service.get_one_or_none(id=id)
+
+@employee_router.put(
+    "/me",
+    status_code=status.HTTP_200_OK,
+    response_model=ReadEmployee,
+)
+async def update_me(
+    employee: Annotated[Employee, Depends(get_current_employee)],
+    employee_service: Annotated[EmployeeService, Depends(get_employee_service)],
+    employee_data: UpdateEmployee,
+):
+    return await employee_service.update_employee(employee.id, employee_data)
+
+@employee_router.put(
+    "/{id}",
+    dependencies=[Depends(get_admin)],
+    status_code=status.HTTP_200_OK,
+    response_model=ReadEmployee,
+)
 async def update_employee(
     employee_service: Annotated[EmployeeService, Depends(get_employee_service)],
     id: UUID,
@@ -37,18 +76,16 @@ async def update_employee(
     updated_employee = await employee_service.update_employee(id, employee_data)
     return updated_employee
 
-@employee_router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
+@employee_router.delete(
+    "/{id}",
+    dependencies=[Depends(get_admin)],
+    status_code=status.HTTP_204_NO_CONTENT,
+)
 async def delete_employee(
     employee_service: Annotated[EmployeeService, Depends(get_employee_service)],
     id: UUID,
 ):
     await employee_service.delete_employee(id)
-
-@employee_router.get("/me", status_code=status.HTTP_200_OK, response_model=ReadEmployee)
-async def get_me(
-    employee: Annotated[Employee, Depends(get_current_employee)],
-):
-    return employee
 
 @auth_router.post("/register", status_code=status.HTTP_201_CREATED, response_model=ReadEmployee)
 async def create_employee(

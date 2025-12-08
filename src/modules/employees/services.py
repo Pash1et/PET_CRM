@@ -32,7 +32,7 @@ class EmployeeService:
         employee_data = employee_data.model_dump()
         email = employee_data.get("email")
     
-        employee = await EmployeeRepository.get_one_or_none(self.session, email=email)
+        employee = await self.get_one_or_none(email=email)
         if employee:
             raise EmployeeAlreadyExists()
 
@@ -59,10 +59,7 @@ class EmployeeService:
         return await EmployeeRepository.get_all_employees(self.session)
     
     async def delete_employee(self, employee_id: UUID) -> None:
-        employee = await EmployeeRepository.get_one_or_none(self.session, id=employee_id)
-
-        if not employee:
-            raise EmployeeNotFound()
+        employee = await self.get_one_or_none(id=employee_id)
         
         deleted = await EmployeeRepository.delete_employee(self.session, employee_id)
         if not deleted:
@@ -76,10 +73,12 @@ class EmployeeService:
             print("Wazzup sync failed, will retry", e) # TODO: Убрать принт и добавить логгер
 
     async def update_employee(self, id: UUID, employee_data: UpdateEmployee) -> Employee | None:
-        employee = await EmployeeRepository.get_one_or_none(self.session, id=id)
-        if not employee:
-            raise EmployeeNotFound()
-        
+        await self.get_one_or_none(id=id)
+
+        exsist_email = self.get_one_or_none(email=employee_data.email)
+        if exsist_email:
+            raise EmployeeAlreadyExists("Employee with this email already exsists")
+
         filtered_data = employee_data.model_dump(exclude_unset=True)
         updated_employee = await EmployeeRepository.update_employee(self.session, id, filtered_data)
         
@@ -92,6 +91,13 @@ class EmployeeService:
             print("Wazzup sync failed, will retry", e) # TODO: Убрать принт и добавить логгер
 
         return updated_employee
+    
+    async def get_one_or_none(self, **filter_by) -> Employee:
+        employee = await EmployeeRepository.get_one_or_none(self.session, **filter_by)
+        if not employee:
+            raise EmployeeNotFound()
+        
+        return employee
 
 
 class AuthService:

@@ -23,6 +23,11 @@ class ReadEmployee(BaseEmployee):
     id: uuid.UUID
 
 
+class ReadEmployeeForAdmin(ReadEmployee):
+    is_active: bool
+    is_admin: bool
+
+
 class LoginEmployee(BaseModel):
     email: EmailStr
     password: str
