@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,7 +11,6 @@ from modules.wazzup.deals import WazzupDeals
 
 
 class DealService:
-
     def __init__(
         self,
         session: AsyncSession,
@@ -57,6 +56,8 @@ class DealService:
         await self.get_one_or_none(id)
 
         filtered_data = deal_data.model_dump(exclude_unset=True)
+        if filtered_data.get("stage") in (DealStage.won, DealStage.lost):
+            filtered_data["closed_at"] = datetime.now()
         updated_deal = await DealRepository.update_deal(self.session, id, filtered_data)
 
         closed = True if updated_deal.stage == DealStage.won or updated_deal.stage == DealStage.lost else False
@@ -65,7 +66,7 @@ class DealService:
             "responsibleUserId": str(updated_deal.responsible_user_id),
             "name": f"{updated_deal.title}",
             "contacts": [str(updated_deal.contact_id)],
-            "uri": f"http://localhost:8000/api/v1/deals/{updated_deal.id}",
+            "uri": f"http://localhost:3000/deals/{updated_deal.id}",
             "closed": closed,
         }])
         return updated_deal
@@ -73,7 +74,7 @@ class DealService:
     async def get_deals_by_period(self):
         today = date.today()
         yesterday = today - timedelta(days=1)
-        week_start = today - timedelta(days=6)
+        week_start = today - timedelta(days=today.weekday())
         month_start = today.replace(day=1)
         
         periods = {
@@ -83,3 +84,23 @@ class DealService:
             "month": await DealRepository.get_count_deals_by_date(self.session, month_start, today),
         }
         return {"periods": periods}
+    
+    async def get_amount_deals_by_period(self):
+        today = date.today()
+        month_start = today.replace(day=1)
+        monday = today - timedelta(days=today.weekday())
+        prev_monday = monday - timedelta(days=7)
+        prev_sunday = prev_monday + timedelta(days=6)
+        prev_month_end = month_start - timedelta(days=1)
+        prev_month_start = prev_month_end.replace(day=1)
+
+        return {
+            "current_month": await DealRepository.get_amount_deals_by_date(self.session, month_start, today),
+            "prev_month": await DealRepository.get_amount_deals_by_date(self.session, prev_month_start, prev_month_end),
+            "current_week": await DealRepository.get_amount_deals_by_date(self.session, monday, today),
+            "prev_week": await DealRepository.get_amount_deals_by_date(self.session, prev_monday, prev_sunday),
+            "trend": [
+                await DealRepository.get_amount_deals_by_date(self.session, trend_day, trend_day)
+                for trend_day in (today - timedelta(days=offset) for offset in range(7, 0, -1))
+            ]
+        }

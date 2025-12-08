@@ -47,6 +47,15 @@ async def get_deals_stats(
     return await deals_service.get_deals_by_period()
 
 @router.get(
+    "/revenue",
+    dependencies=[Depends(get_current_employee)],
+)
+async def get_revenue(
+    deals_service: Annotated[DealService, Depends(get_deal_service)],
+):
+    return await deals_service.get_amount_deals_by_period()
+
+@router.get(
     "/{id}",
     dependencies=[Depends(get_current_employee)],
     status_code=status.HTTP_200_OK,
